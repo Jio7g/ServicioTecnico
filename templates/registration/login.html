@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Ingresar{% endblock %}
+{% block content %}
+<div class="mx-auto mt-10 max-w-sm rounded-2xl bg-white p-6 shadow">
+  <h1 class="text-xl font-bold">Ingresar al sistema</h1>
+  <p class="mb-4 text-sm text-slate-500">Reportes de atención técnica</p>
+  <form method="post" class="space-y-4">{% csrf_token %}
+    {% if form.errors %}<p class="rounded-lg bg-red-50 p-3 text-sm text-red-700">Usuario o contraseña incorrectos.</p>{% endif %}
+    <div>
+      <label class="mb-1 block text-sm font-medium" for="id_username">Usuario</label>
+      <input id="id_username" name="username" autofocus required
+        class="block w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200">
+    </div>
+    <div>
+      <label class="mb-1 block text-sm font-medium" for="id_password">Contraseña</label>
+      <input id="id_password" name="password" type="password" required
+        class="block w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200">
+    </div>
+    <button class="w-full rounded-lg bg-sky-700 py-2.5 font-medium text-white hover:bg-sky-800">Entrar</button>
+  </form>
+</div>
+{% endblock %}

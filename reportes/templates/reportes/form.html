@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+{% block title %}{% if object %}Editar {{ object.numero }}{% else %}Nuevo reporte{% endif %}{% endblock %}
+
+{% block content %}
+<div class="mb-5">
+  <a href="{% url 'reportes:lista' %}" class="text-sm text-sky-700 hover:underline">← Volver a la lista</a>
+  <h1 class="mt-1 text-2xl font-bold">{% if object %}Editar reporte {{ object.numero }}{% else %}Nuevo reporte de atención técnica{% endif %}</h1>
+  <p class="text-sm text-slate-500">Los campos con <span class="text-red-500">*</span> son obligatorios. El No. de reporte se genera solo.</p>
+</div>
+
+<form method="post" id="form-reporte" class="space-y-5" novalidate>
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="rounded-lg bg-red-50 p-3 text-sm text-red-700">{{ form.non_field_errors }}</div>{% endif %}
+
+  {# 1. DATOS GENERALES #}
+  <section class="rounded-2xl bg-white p-5 shadow-sm">
+    <h2 class="mb-4 flex items-center gap-2 text-base font-semibold text-sky-800"><span class="grid h-6 w-6 place-items-center rounded-full bg-sky-100 text-xs">1</span> Datos generales y persona afectada</h2>
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {% include "reportes/_campo.html" with campo=form.fecha %}
+      {% include "reportes/_campo.html" with campo=form.oficina %}
+      {% include "reportes/_campo.html" with campo=form.persona_afectada %}
+      {% include "reportes/_campo.html" with campo=form.cargo %}
+      {% include "reportes/_campo.html" with campo=form.telefono %}
+      {% include "reportes/_campo.html" with campo=form.tecnico %}
+      {% include "reportes/_campo.html" with campo=form.hora_llegada %}
+      {% include "reportes/_campo.html" with campo=form.hora_salida %}
+    </div>
+  </section>
+
+  {# 2, 3, 4 #}
+  <div class="grid gap-5 lg:grid-cols-3">
+    <section class="rounded-2xl bg-white p-5 shadow-sm">
+      <h2 class="mb-4 flex items-center gap-2 text-base font-semibold text-sky-800"><span class="grid h-6 w-6 place-items-center rounded-full bg-sky-100 text-xs">2</span> Problema reportado</h2>
+      <p class="mb-2 text-sm font-medium text-slate-700">Tipo de problema</p>
+      <div class="mb-3 grid grid-cols-1 gap-2 min-[420px]:grid-cols-2">
+        {% for c in form.tipos_problema %}
+        <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50 has-[:checked]:border-sky-400 has-[:checked]:bg-sky-50">
+          {{ c.tag }} {{ c.choice_label }}
+        </label>
+        {% endfor %}
+      </div>
+      <div id="otro-box" class="mb-3 hidden">{% include "reportes/_campo.html" with campo=form.otro_tipo %}</div>
+      {% if form.otro_tipo.errors %}<script>document.addEventListener("DOMContentLoaded",()=>document.getElementById("otro-box").classList.remove("hidden"))</script>{% endif %}
+      {% include "reportes/_campo.html" with campo=form.descripcion %}
+    </section>
+
+    <section class="rounded-2xl bg-white p-5 shadow-sm">
+      <h2 class="mb-4 flex items-center gap-2 text-base font-semibold text-sky-800"><span class="grid h-6 w-6 place-items-center rounded-full bg-sky-100 text-xs">3</span> Resolución aplicada</h2>
+      {% include "reportes/_campo.html" with campo=form.resolucion %}
+    </section>
+
+    <section class="rounded-2xl bg-white p-5 shadow-sm">
+      <h2 class="mb-4 flex items-center gap-2 text-base font-semibold text-sky-800"><span class="grid h-6 w-6 place-items-center rounded-full bg-sky-100 text-xs">4</span> Recomendaciones</h2>
+      {% include "reportes/_campo.html" with campo=form.recomendaciones %}
+    </section>
+  </div>
+
+  {# 5 y 6 #}
+  <div class="grid gap-5 lg:grid-cols-5">
+    <section class="rounded-2xl bg-white p-5 shadow-sm lg:col-span-2">
+      <h2 class="mb-4 flex items-center gap-2 text-base font-semibold text-sky-800"><span class="grid h-6 w-6 place-items-center rounded-full bg-sky-100 text-xs">5</span> Confirmación de la solución</h2>
+      <p class="mb-2 text-sm font-medium text-slate-700">¿Se resolvió el problema?</p>
+      <div class="mb-4 space-y-2">
+        {% for c in form.resultado %}
+        <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50 has-[:checked]:border-sky-400 has-[:checked]:bg-sky-50">{{ c.tag }} {{ c.choice_label }}</label>
+        {% endfor %}
+      </div>
+      {% include "reportes/_campo.html" with campo=form.motivo_seguimiento %}
+    </section>
+
+    <section class="rounded-2xl bg-white p-5 shadow-sm lg:col-span-3">
+      <h2 class="mb-4 flex items-center gap-2 text-base font-semibold text-sky-800"><span class="grid h-6 w-6 place-items-center rounded-full bg-sky-100 text-xs">6</span> Compra de materiales o repuestos</h2>
+      <p class="mb-2 text-sm font-medium text-slate-700">¿Fue necesario comprar algo?</p>
+      <div class="mb-4 flex flex-wrap gap-2" id="compra-radios">
+        {% for c in form.hubo_compra %}
+        <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50 has-[:checked]:border-sky-400 has-[:checked]:bg-sky-50">{{ c.tag }} {{ c.choice_label }}</label>
+        {% endfor %}
+      </div>
+
+      <div id="compra-box" class="hidden">
+        {% include "reportes/_campo.html" with campo=form.no_factura extra_class="mb-4 sm:max-w-xs" %}
+        {{ formset.management_form }}
+        {% if formset.non_form_errors %}<p class="mb-2 text-xs text-red-600">{{ formset.non_form_errors }}</p>{% endif %}
+
+        <div class="hidden grid-cols-12 gap-2 px-1 pb-1 text-xs font-medium text-slate-500 sm:grid">
+          <span class="col-span-5">Artículo comprado</span><span class="col-span-2">Cantidad</span>
+          <span class="col-span-2">Precio unit. (Q)</span><span class="col-span-2 text-right">Total (Q)</span><span></span>
+        </div>
+        <div id="filas" class="space-y-3 sm:space-y-2">
+          {% for f in formset %}
+          <div class="fila grid grid-cols-12 items-center gap-2 rounded-lg border border-slate-200 p-3 sm:border-0 sm:p-0">
+            {% for h in f.hidden_fields %}{{ h }}{% endfor %}
+            <div class="col-span-12 sm:col-span-5">{{ f.articulo }}{% for e in f.articulo.errors %}<p class="text-xs text-red-600">{{ e }}</p>{% endfor %}</div>
+            <div class="col-span-4 sm:col-span-2">{{ f.cantidad }}</div>
+            <div class="col-span-4 sm:col-span-2">{{ f.precio_unitario }}</div>
+            <div class="js-total col-span-4 text-right text-sm font-medium sm:col-span-2">0.00</div>
+            <div class="col-span-12 text-right sm:col-span-1">
+              {% if f.instance.pk %}<label class="text-xs text-red-600"><input type="checkbox" name="{{ f.DELETE.html_name }}" class="mr-1 accent-red-600">Quitar</label>
+              {% else %}<button type="button" class="js-quitar rounded-lg px-2 py-1 text-red-600 hover:bg-red-50" title="Quitar fila">✕</button>{% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <template id="fila-vacia">
+          <div class="fila grid grid-cols-12 items-center gap-2 rounded-lg border border-slate-200 p-3 sm:border-0 sm:p-0">
+            <div class="col-span-12 sm:col-span-5">{{ formset.empty_form.articulo }}</div>
+            <div class="col-span-4 sm:col-span-2">{{ formset.empty_form.cantidad }}</div>
+            <div class="col-span-4 sm:col-span-2">{{ formset.empty_form.precio_unitario }}</div>
+            <div class="js-total col-span-4 text-right text-sm font-medium sm:col-span-2">0.00</div>
+            <div class="col-span-12 text-right sm:col-span-1"><button type="button" class="js-quitar rounded-lg px-2 py-1 text-red-600 hover:bg-red-50">✕</button></div>
+          </div>
+        </template>
+
+        <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
+          <button type="button" id="agregar" class="rounded-lg border border-sky-300 px-3 py-2 text-sm font-medium text-sky-700 hover:bg-sky-50">＋ Agregar artículo</button>
+          <p class="text-sm">Total de la compra: <strong class="text-lg">Q <span id="gran-total">0.00</span></strong></p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  {# 7 y 8 FIRMAS (se dibujan con el dedo o el mouse) #}
+  <section class="rounded-2xl bg-white p-5 shadow-sm">
+    <h2 class="mb-1 flex items-center gap-2 text-base font-semibold text-sky-800"><span class="grid h-6 w-6 place-items-center rounded-full bg-sky-100 text-xs">7-8</span> Firmas</h2>
+    <p class="mb-4 text-sm text-slate-500">Escriba el nombre y firme dibujando dentro del recuadro con el dedo (o el mouse).</p>
+    <div class="grid gap-6 md:grid-cols-2">
+      <div>
+        {% include "reportes/_campo.html" with campo=form.firma_tecnico %}
+        {{ form.firma_tecnico_img }}
+        <p class="mb-1 mt-3 text-sm font-medium text-slate-700">Firma del técnico</p>
+        <div class="firma-wrap relative overflow-hidden rounded-lg border-2 border-dashed border-slate-300 bg-slate-50" data-target="{{ form.firma_tecnico_img.id_for_label }}">
+          <canvas class="firma-canvas block h-40 w-full touch-none"></canvas>
+          <span class="firma-hint pointer-events-none absolute inset-0 grid place-items-center text-sm text-slate-400">✍ Firme aquí</span>
+        </div>
+        <button type="button" class="firma-limpiar mt-2 rounded-lg border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50">Borrar firma</button>
+        {% for e in form.firma_tecnico_img.errors %}<p class="mt-1 text-xs text-red-600">{{ e }}</p>{% endfor %}
+      </div>
+      <div>
+        {% include "reportes/_campo.html" with campo=form.firma_encargado %}
+        {{ form.firma_encargado_img }}
+        <p class="mb-1 mt-3 text-sm font-medium text-slate-700">Firma del encargado de oficina</p>
+        <div class="firma-wrap relative overflow-hidden rounded-lg border-2 border-dashed border-slate-300 bg-slate-50" data-target="{{ form.firma_encargado_img.id_for_label }}">
+          <canvas class="firma-canvas block h-40 w-full touch-none"></canvas>
+          <span class="firma-hint pointer-events-none absolute inset-0 grid place-items-center text-sm text-slate-400">✍ Firme aquí</span>
+        </div>
+        <button type="button" class="firma-limpiar mt-2 rounded-lg border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50">Borrar firma</button>
+        {% for e in form.firma_encargado_img.errors %}<p class="mt-1 text-xs text-red-600">{{ e }}</p>{% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <div class="sticky bottom-0 -mx-4 flex justify-end gap-3 border-t border-slate-200 bg-slate-100/95 px-4 py-3 backdrop-blur">
+    <a href="{% url 'reportes:lista' %}" class="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium hover:bg-slate-50">Cancelar</a>
+    <button class="rounded-lg bg-sky-700 px-6 py-2.5 text-sm font-medium text-white shadow hover:bg-sky-800">Guardar reporte</button>
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+
+  // "Otro": mostrar campo de texto sólo si está marcado
+  const otro = $('input[name="tipos_problema"][value="otro"]');
+  const otroBox = $('#otro-box');
+  const syncOtro = () => otroBox.classList.toggle('hidden', !otro.checked);
+  otro.addEventListener('change', syncOtro); syncOtro();
+
+  // Compras: mostrar tabla sólo si eligió "Sí"
+  const compraBox = $('#compra-box');
+  const radios = $$('input[name="hubo_compra"]');
+  const syncCompra = () => {
+    const si = radios.some(r => r.checked && r.value === 'True');
+    compraBox.classList.toggle('hidden', !si);
+  };
+  radios.forEach(r => r.addEventListener('change', syncCompra)); syncCompra();
+
+  // Totales en vivo
+  const filas = $('#filas');
+  const recalcular = () => {
+    let gran = 0;
+    $$('.fila', filas).forEach(f => {
+      const c = parseFloat($('.js-cant', f).value) || 0;
+      const p = parseFloat($('.js-precio', f).value) || 0;
+      $('.js-total', f).textContent = (c * p).toFixed(2);
+      gran += c * p;
+    });
+    $('#gran-total').textContent = gran.toFixed(2);
+  };
+  filas.addEventListener('input', recalcular);
+
+  // Agregar / quitar filas del formset
+  const total = $('#id_compras-TOTAL_FORMS');
+  $('#agregar').addEventListener('click', () => {
+    const n = parseInt(total.value, 10);
+    const html = $('#fila-vacia').innerHTML.replaceAll('__prefix__', n);
+    filas.insertAdjacentHTML('beforeend', html);
+    total.value = n + 1;
+  });
+  filas.addEventListener('click', e => {
+    const b = e.target.closest('.js-quitar');
+    if (!b) return;
+    // fila nueva sin guardar: se limpia y se oculta (el formset ignora filas vacías)
+    const f = b.closest('.fila');
+    $$('input', f).forEach(i => { if (i.type !== 'hidden') i.value = ''; });
+    f.classList.add('hidden'); recalcular();
+  });
+  recalcular();
+
+  // ---- Firmas dibujadas (táctil y mouse) ----
+  const pads = $$('.firma-wrap').map(wrap => {
+    const canvas = $('canvas', wrap), hint = $('.firma-hint', wrap);
+    const input = document.getElementById(wrap.dataset.target);
+    const ctx = canvas.getContext('2d');
+    let dibujando = false, hayTrazo = false, last = null;
+
+    const estilo = () => { ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#0f172a'; };
+    const ajustar = (restaurar) => {
+      const r = canvas.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+      if (!r.width) return;
+      const previo = hayTrazo ? canvas.toDataURL() : input.value;
+      canvas.width = Math.round(r.width * dpr); canvas.height = Math.round(r.height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0); estilo();
+      if (restaurar && previo) {
+        const img = new Image();
+        img.onload = () => { ctx.drawImage(img, 0, 0, r.width, r.height); hayTrazo = true; hint.classList.add('hidden'); };
+        img.src = previo;
+      }
+    };
+    const punto = e => { const r = canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+
+    canvas.addEventListener('pointerdown', e => {
+      e.preventDefault(); canvas.setPointerCapture(e.pointerId);
+      dibujando = true; last = punto(e); hayTrazo = true; hint.classList.add('hidden');
+      ctx.beginPath(); ctx.arc(last.x, last.y, 1.2, 0, Math.PI * 2); ctx.fillStyle = '#0f172a'; ctx.fill();
+    });
+    canvas.addEventListener('pointermove', e => {
+      if (!dibujando) return; e.preventDefault();
+      const p = punto(e); ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(p.x, p.y); ctx.stroke(); last = p;
+    });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => canvas.addEventListener(ev, () => { dibujando = false; }));
+
+    const limpiar = () => {
+      ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.restore();
+      hayTrazo = false; input.value = ''; hint.classList.remove('hidden');
+    };
+    $('.firma-limpiar', wrap.parentElement).addEventListener('click', limpiar);
+
+    ajustar(true);
+    return { ajustar, guardar: () => { input.value = hayTrazo ? canvas.toDataURL('image/png') : ''; } };
+  });
+  window.addEventListener('resize', () => pads.forEach(p => p.ajustar(true)));
+  document.getElementById('form-reporte').addEventListener('submit', () => pads.forEach(p => p.guardar()));
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}{{ object.numero }}{% endblock %}
+{% block content %}
+<div class="mb-4 flex flex-wrap items-center justify-between gap-3 print:hidden">
+  <a href="{% url 'reportes:lista' %}" class="text-sm text-sky-700 hover:underline">← Volver a la lista</a>
+  <div class="flex gap-2">
+    <button onclick="window.print()" class="rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-900">🖨 Imprimir</button>
+    <a href="{% url 'reportes:editar' object.pk %}" class="rounded-lg bg-sky-700 px-4 py-2 text-sm font-medium text-white hover:bg-sky-800">Editar</a>
+    <a href="{% url 'reportes:eliminar' object.pk %}" class="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50">Eliminar</a>
+  </div>
+</div>
+
+<article class="rounded-2xl bg-white p-5 shadow-sm sm:p-8 print:rounded-none print:p-0 print:shadow-none">
+  <header class="mb-6 text-center">
+    <h1 class="text-xl font-bold uppercase tracking-wide sm:text-2xl">Formato de reporte de atención técnica</h1>
+    <p class="text-slate-500">Municipalidad de Chiquimula, Guatemala</p>
+  </header>
+
+  <div class="overflow-hidden rounded-lg border border-slate-300 text-sm">
+    <div class="bg-sky-100 px-3 py-1.5 font-semibold">1. Datos generales y persona afectada</div>
+    <dl class="grid sm:grid-cols-2">
+      <div class="flex border-t border-slate-200"><dt class="w-40 shrink-0 bg-slate-50 px-3 py-2 font-semibold">Reporte No.</dt><dd class="px-3 py-2">{{ object.numero }}</dd></div>
+      <div class="flex border-t border-slate-200"><dt class="w-40 shrink-0 bg-slate-50 px-3 py-2 font-semibold">Fecha</dt><dd class="px-3 py-2">{{ object.fecha|date:"d/m/Y" }}</dd></div>
+      <div class="flex border-t border-slate-200"><dt class="w-40 shrink-0 bg-slate-50 px-3 py-2 font-semibold">Oficina</dt><dd class="px-3 py-2">{{ object.oficina }}</dd></div>
+      <div class="flex border-t border-slate-200"><dt class="w-40 shrink-0 bg-slate-50 px-3 py-2 font-semibold">Llegada / salida</dt><dd class="px-3 py-2">{{ object.hora_llegada|time:"H:i"|default:"—" }} / {{ object.hora_salida|time:"H:i"|default:"—" }}</dd></div>
+      <div class="flex border-t border-slate-200"><dt class="w-40 shrink-0 bg-slate-50 px-3 py-2 font-semibold">Persona afectada</dt><dd class="px-3 py-2">{{ object.persona_afectada }}</dd></div>
+      <div class="flex border-t border-slate-200"><dt class="w-40 shrink-0 bg-slate-50 px-3 py-2 font-semibold">Cargo o puesto</dt><dd class="px-3 py-2">{{ object.cargo|default:"—" }}</dd></div>
+      <div class="flex border-t border-slate-200"><dt class="w-40 shrink-0 bg-slate-50 px-3 py-2 font-semibold">Técnico</dt><dd class="px-3 py-2">{{ object.tecnico }}</dd></div>
+      <div class="flex border-t border-slate-200"><dt class="w-40 shrink-0 bg-slate-50 px-3 py-2 font-semibold">Teléfono / ext.</dt><dd class="px-3 py-2">{{ object.telefono|default:"—" }}</dd></div>
+    </dl>
+  </div>
+
+  <div class="mt-4 grid gap-4 lg:grid-cols-3">
+    <section class="rounded-lg border border-slate-300 text-sm">
+      <div class="bg-sky-100 px-3 py-1.5 font-semibold">2. Problema reportado</div>
+      <div class="space-y-2 p-3">
+        <p class="font-semibold">Tipo de problema</p>
+        <div class="flex flex-wrap gap-1.5">{% for t in object.tipos_display %}<span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs">{{ t }}</span>{% empty %}<span class="text-slate-400">—</span>{% endfor %}</div>
+        <p class="font-semibold">Descripción</p>
+        <p class="whitespace-pre-line">{{ object.descripcion }}</p>
+      </div>
+    </section>
+    <section class="rounded-lg border border-slate-300 text-sm">
+      <div class="bg-sky-100 px-3 py-1.5 font-semibold">3. Resolución aplicada</div>
+      <p class="whitespace-pre-line p-3">{{ object.resolucion|default:"—" }}</p>
+    </section>
+    <section class="rounded-lg border border-slate-300 text-sm">
+      <div class="bg-sky-100 px-3 py-1.5 font-semibold">4. Recomendaciones</div>
+      <p class="whitespace-pre-line p-3">{{ object.recomendaciones|default:"—" }}</p>
+    </section>
+  </div>
+
+  <div class="mt-4 grid gap-4 lg:grid-cols-5">
+    <section class="rounded-lg border border-slate-300 text-sm lg:col-span-2">
+      <div class="bg-sky-100 px-3 py-1.5 font-semibold">5. Confirmación de la solución</div>
+      <div class="space-y-2 p-3">
+        <p><strong>¿Se resolvió?</strong> {{ object.get_resultado_display }}</p>
+        <p><strong>Motivo o seguimiento:</strong><br><span class="whitespace-pre-line">{{ object.motivo_seguimiento|default:"—" }}</span></p>
+      </div>
+    </section>
+    <section class="rounded-lg border border-slate-300 text-sm lg:col-span-3">
+      <div class="bg-sky-100 px-3 py-1.5 font-semibold">6. Compra de materiales o repuestos</div>
+      <div class="p-3">
+        {% if object.hubo_compra %}
+        <p class="mb-2"><strong>Factura / comprobante:</strong> {{ object.no_factura|default:"—" }}</p>
+        <div class="overflow-x-auto">
+        <table class="w-full border border-slate-300 text-left">
+          <thead class="bg-slate-50"><tr><th class="px-2 py-1">Artículo</th><th class="px-2 py-1">Cant.</th><th class="px-2 py-1">Precio unit. (Q)</th><th class="px-2 py-1 text-right">Total (Q)</th></tr></thead>
+          <tbody>
+            {% for i in object.compras.all %}
+            <tr class="border-t border-slate-200"><td class="px-2 py-1">{{ i.articulo }}</td><td class="px-2 py-1">{{ i.cantidad }}</td><td class="px-2 py-1">{{ i.precio_unitario|floatformat:2 }}</td><td class="px-2 py-1 text-right">{{ i.total|floatformat:2 }}</td></tr>
+            {% endfor %}
+            <tr class="border-t border-slate-300 bg-slate-50 font-semibold"><td colspan="3" class="px-2 py-1 text-right">Total de la compra</td><td class="px-2 py-1 text-right">Q {{ object.total_compra|floatformat:2 }}</td></tr>
+          </tbody>
+        </table>
+        </div>
+        {% else %}<p>No fue necesario comprar nada.</p>{% endif %}
+      </div>
+    </section>
+  </div>
+
+  <div class="mt-4 grid gap-4 md:grid-cols-2">
+    {% for titulo, nombre, img in firmas %}
+    <section class="rounded-lg border border-slate-300 text-sm">
+      <div class="bg-sky-100 px-3 py-1.5 font-semibold">{{ titulo }}</div>
+      <div class="flex h-36 flex-col justify-end p-3">
+        {% if img %}<img src="{{ img }}" alt="Firma" class="mx-auto mb-1 max-h-24 object-contain">{% endif %}
+        <div class="border-t border-slate-400 pt-1 text-center text-xs text-slate-600">{{ nombre|default:"Firma y sello" }}</div>
+      </div>
+    </section>
+    {% endfor %}
+  </div>
+</article>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Reportes{% endblock %}
+{% block content %}
+<div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+  <h1 class="text-2xl font-bold">Reportes de atención técnica</h1>
+  <a href="{% url 'reportes:nuevo' %}" class="inline-flex items-center gap-2 rounded-lg bg-sky-700 px-4 py-2.5 font-medium text-white shadow hover:bg-sky-800">
+    <span class="text-lg leading-none">＋</span> Nuevo reporte
+  </a>
+</div>
+
+<div class="mb-5 grid grid-cols-3 gap-3">
+  <div class="rounded-xl bg-white p-4 shadow-sm"><p class="text-xs text-slate-500">Total</p><p class="text-2xl font-bold">{{ stats.total }}</p></div>
+  <div class="rounded-xl bg-white p-4 shadow-sm"><p class="text-xs text-slate-500">Resueltos</p><p class="text-2xl font-bold text-emerald-600">{{ stats.resueltos }}</p></div>
+  <div class="rounded-xl bg-white p-4 shadow-sm"><p class="text-xs text-slate-500">Pendientes</p><p class="text-2xl font-bold text-amber-600">{{ stats.pendientes }}</p></div>
+</div>
+
+<form method="get" class="mb-5 flex flex-col gap-3 sm:flex-row">
+  <input name="q" value="{{ q }}" placeholder="Buscar por No., oficina, persona o técnico…"
+    class="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200">
+  <select name="estado" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm sm:w-64">
+    <option value="">Todos los estados</option>
+    {% for v, l in resultados %}<option value="{{ v }}" {% if v == estado %}selected{% endif %}>{{ l }}</option>{% endfor %}
+  </select>
+  <button class="rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-900">Filtrar</button>
+</form>
+
+{# Tarjetas en móvil, tabla en pantallas medianas en adelante #}
+<div class="space-y-3 md:hidden">
+  {% for r in reportes %}
+  <a href="{{ r.get_absolute_url }}" class="block rounded-xl bg-white p-4 shadow-sm">
+    <div class="flex items-center justify-between">
+      <span class="font-semibold text-sky-800">{{ r.numero }}</span>
+      <span class="text-xs text-slate-500">{{ r.fecha|date:"d/m/Y" }}</span>
+    </div>
+    <p class="mt-1 text-sm">{{ r.oficina }}</p>
+    <p class="text-xs text-slate-500">{{ r.persona_afectada }} · Téc. {{ r.tecnico }}</p>
+    <span class="mt-2 inline-block rounded-full px-2.5 py-0.5 text-xs font-medium
+      {% if r.resultado == 'si' %}bg-emerald-100 text-emerald-700{% elif r.resultado == 'parcial' %}bg-amber-100 text-amber-700{% else %}bg-red-100 text-red-700{% endif %}">{{ r.get_resultado_display }}</span>
+  </a>
+  {% empty %}
+  <p class="rounded-xl bg-white p-6 text-center text-slate-500">No hay reportes todavía.</p>
+  {% endfor %}
+</div>
+
+<div class="hidden overflow-hidden rounded-xl bg-white shadow-sm md:block">
+  <table class="min-w-full text-sm">
+    <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+      <tr><th class="px-4 py-3">No.</th><th class="px-4 py-3">Fecha</th><th class="px-4 py-3">Oficina</th>
+          <th class="px-4 py-3">Persona</th><th class="px-4 py-3">Técnico</th><th class="px-4 py-3">Estado</th><th class="px-4 py-3"></th></tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for r in reportes %}
+      <tr class="hover:bg-slate-50">
+        <td class="px-4 py-3 font-medium text-sky-800"><a href="{{ r.get_absolute_url }}">{{ r.numero }}</a></td>
+        <td class="px-4 py-3">{{ r.fecha|date:"d/m/Y" }}</td>
+        <td class="px-4 py-3">{{ r.oficina }}</td>
+        <td class="px-4 py-3">{{ r.persona_afectada }}</td>
+        <td class="px-4 py-3">{{ r.tecnico }}</td>
+        <td class="px-4 py-3">
+          <span class="rounded-full px-2.5 py-0.5 text-xs font-medium
+            {% if r.resultado == 'si' %}bg-emerald-100 text-emerald-700{% elif r.resultado == 'parcial' %}bg-amber-100 text-amber-700{% else %}bg-red-100 text-red-700{% endif %}">{{ r.get_resultado_display }}</span>
+        </td>
+        <td class="px-4 py-3 text-right whitespace-nowrap">
+          <a href="{% url 'reportes:editar' r.pk %}" class="text-sky-700 hover:underline">Editar</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7" class="px-4 py-10 text-center text-slate-500">No hay reportes todavía.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if is_paginated %}
+<div class="mt-5 flex items-center justify-between text-sm">
+  {% if page_obj.has_previous %}<a class="rounded-lg bg-white px-3 py-2 shadow-sm" href="?page={{ page_obj.previous_page_number }}&q={{ q }}&estado={{ estado }}">← Anterior</a>{% else %}<span></span>{% endif %}
+  <span class="text-slate-500">Página {{ page_obj.number }} de {{ paginator.num_pages }}</span>
+  {% if page_obj.has_next %}<a class="rounded-lg bg-white px-3 py-2 shadow-sm" href="?page={{ page_obj.next_page_number }}&q={{ q }}&estado={{ estado }}">Siguiente →</a>{% else %}<span></span>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

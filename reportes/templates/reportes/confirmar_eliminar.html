@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Eliminar{% endblock %}
+{% block content %}
+<div class="mx-auto mt-10 max-w-md rounded-2xl bg-white p-6 text-center shadow">
+  <h1 class="text-xl font-bold">¿Eliminar el reporte {{ object.numero }}?</h1>
+  <p class="mt-2 text-sm text-slate-500">Se borrará también su tabla de compras. Esta acción no se puede deshacer.</p>
+  <form method="post" class="mt-6 flex justify-center gap-3">{% csrf_token %}
+    <a href="{{ object.get_absolute_url }}" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-50">Cancelar</a>
+    <button class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">Sí, eliminar</button>
+  </form>
+</div>
+{% endblock %}
