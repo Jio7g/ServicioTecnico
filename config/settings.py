@@ -130,3 +130,12 @@ MAILERS = {
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'reportes:lista'
 LOGOUT_REDIRECT_URL = 'login'
+
+import os
+
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://serviciotecnico-production-7dd0.up.railway.app',
+    'https://*.railway.app',
+]
